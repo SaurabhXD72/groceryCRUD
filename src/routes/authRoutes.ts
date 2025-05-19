@@ -1,20 +1,16 @@
-import { Router } from 'express';
-import { register, login } from '../controllers/authController';
+// Create file: backend/routes/authRoutes.js
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/authController');
+const { authenticate } = require('../middleware/authMiddleware');
 
-const router = Router();
+// Register a new user
+router.post('/register', authController.register);
 
-router.post('/register', (req, res) => {
-    register(req, res).catch(err => {
-        console.error(err);
-        res.status(500).json({ error: 'Internal server error' });
-    });
-});
+// Login user
+router.post('/login', authController.login);
 
-router.post('/login', (req, res) => {
-    login(req, res).catch(err => {
-        console.error(err);
-        res.status(500).json({ error: 'Internal server error' });
-    });
-});
+// Get current user (protected route)
+router.get('/me', authenticate, authController.getCurrentUser);
 
-export default router;
+module.exports = router;
