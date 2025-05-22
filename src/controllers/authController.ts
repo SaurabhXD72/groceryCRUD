@@ -1,114 +1,133 @@
-// Create file: backend/controllers/authController.js
-const jwt = require('jsonwebtoken');
-const userModel = require('../models/userModel');
+// src/controllers/authController.ts
+import { Request, Response } from 'express';
+import { createUser, getUserByEmail, emailExists, toUserDTO } from '../dal/userDal';
+import { verifyPassword, generateToken } from '../utils/auth';
+import { UserCreationAttributes } from '../models/User';
 
 // Register a new user
-exports.register = async (req, res) => {
+export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body;
-    
-    // Validate request
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Please provide all required fields' });
+    const { email, password, role } = req.body as UserCreationAttributes;
+
+    // Input validation
+    if (!email || !password) {
+      res.status(400).json({ message: 'Email and password are required' });
+      return;
     }
-    
-    // Check if user already exists
-    const existingUser = await userModel.getUserByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this email' });
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400).json({ message: 'Invalid email format' });
+      return;
     }
-    
+
+    // Password strength validation
+    if (password.length < 8) {
+      res.status(400).json({ message: 'Password must be at least 8 characters long' });
+      return;
+    }
+
+    // Check if email exists
+    const exists = await emailExists(email);
+    if (exists) {
+      res.status(409).json({ message: 'Email already registered' });
+      return;
+    }
+
+    // Use default role as 'customer' if not provided or invalid
+    const validRole = role === 'admin' ? 'admin' : 'customer';
+
     // Create user
-    const user = await userModel.createUser({
-      name,
-      email,
-      password,
-      role: role || 'customer' // Default to customer if not specified
-    });
+    const newUser = await createUser({ email, password, role: validRole });
     
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user[0].id, role: user[0].role },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    // Generate token
+    const token = generateToken(newUser);
+    
+    // Return user data without password
+    const userDto = toUserDTO(newUser);
     
     res.status(201).json({
-      token,
-      user: {
-        id: user[0].id,
-        name: user[0].name,
-        email: user[0].email,
-        role: user[0].role
-      }
+      message: 'User registered successfully',
+      user: userDto,
+      token
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Error registering user' });
   }
 };
 
 // Login user
-exports.login = async (req, res) => {
+export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     
-    // Validate request
+    // Input validation
     if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
+      res.status(400).json({ message: 'Email and password are required' });
+      return;
     }
     
-    // Check if user exists
-    const user = await userModel.getUserByEmail(email);
+    // Get user by email
+    const user = await getUserByEmail(email);
+    
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      res.status(401).json({ message: 'Invalid email or password' });
+      return;
     }
     
-    // Validate password
-    const isPasswordValid = await userModel.validatePassword(password, user.password);
+    // Verify password
+    const isPasswordValid = await verifyPassword(password, user.password);
+    
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      res.status(401).json({ message: 'Invalid email or password' });
+      return;
     }
     
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    // Generate token
+    const token = generateToken(user);
     
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+    // Return user data without password
+    const userDto = toUserDTO(user);
+    
+    res.status(200).json({
+      message: 'Login successful',
+      user: userDto,
+      token
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Error during login' });
   }
 };
 
-// Get current user
-exports.getCurrentUser = async (req, res) => {
+// Get current user profile
+export const getCurrentUser = async (req: Request & { user?: any }, res: Response): Promise<void> => {
   try {
-    const user = await userModel.getUserById(req.user.id);
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!req.user) {
+      res.status(401).json({ message: 'Not authenticated' });
+      return;
     }
     
-    res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
+    const { userId } = req.user;
+    
+    // Get user from database to get the most up-to-date information
+    const user = await getUserByEmail(req.user.email);
+    
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+    
+    // Return user data without password
+    const userDto = toUserDTO(user);
+    
+    res.status(200).json({
+      user: userDto
     });
   } catch (error) {
-    console.error('Get current user error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error getting current user:', error);
+    res.status(500).json({ message: 'Error retrieving user profile' });
   }
 };

@@ -1,116 +1,306 @@
-// Create file: backend/controllers/productController.js
-const productModel = require('../models/productModel');
+// src/controllers/productController.ts
+import { Request, Response } from 'express';
+import { 
+  createProduct, 
+  getProductById, 
+  getProducts, 
+  getProductsByAdmin,
+  updateProduct, 
+  deleteProduct,
+  getAvailableBrands
+} from '../dal/productDal';
+import { ProductCreationAttributes, ProductFilter } from '../models/Product';
 
-// Get all products
-exports.getAllProducts = async (req, res) => {
+// Create a new product
+export const createNewProduct = async (req: Request & { user?: any }, res: Response): Promise<void> => {
   try {
-    const products = await productModel.getAllProducts();
-    res.json(products);
+    // Ensure user is authenticated and is an admin
+    if (!req.user || req.user.role !== 'admin') {
+      res.status(403).json({ message: 'Only admins can create products' });
+      return;
+    }
+
+    const productData = req.body as ProductCreationAttributes;
+    
+    // Input validation
+    if (!productData.name || !productData.brand || !productData.model || !productData.price) {
+      res.status(400).json({ message: 'Required fields missing: name, brand, model, and price are mandatory' });
+      return;
+    }
+
+    // Ensure price is a positive number
+    if (productData.price <= 0) {
+      res.status(400).json({ message: 'Price must be greater than zero' });
+      return;
+    }
+
+    // Ensure stockQuantity is non-negative
+    if (productData.stockQuantity < 0) {
+      res.status(400).json({ message: 'Stock quantity cannot be negative' });
+      return;
+    }
+
+    // Set the createdBy field to the current user's ID
+    productData.createdBy = req.user.userId;
+    
+    // Ensure valid specifications object
+    if (!productData.specifications) {
+      productData.specifications = {};
+    }
+    
+    // Ensure valid imageUrls array
+    if (!productData.imageUrls) {
+      productData.imageUrls = [];
+    }
+
+    // Create the product
+    const newProduct = await createProduct(productData);
+    
+    res.status(201).json({
+      message: 'Product created successfully',
+      product: newProduct
+    });
   } catch (error) {
-    console.error('Get all products error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error creating product:', error);
+    res.status(500).json({ message: 'Error creating product' });
+  }
+};
+
+// Get all products (with optional filters)
+export const getAllProducts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const filter: ProductFilter = {};
+    
+    // Extract filter parameters from query string
+    if (req.query.createdBy && typeof req.query.createdBy === 'string') {
+      filter.createdBy = parseInt(req.query.createdBy, 10);
+    }
+    
+    if (req.query.adminEmail && typeof req.query.adminEmail === 'string') {
+      filter.adminEmail = req.query.adminEmail;
+    }
+    
+    if (req.query.brand && typeof req.query.brand === 'string') {
+      filter.brand = req.query.brand;
+    }
+    
+    if (req.query.status && typeof req.query.status === 'string') {
+      if (['active', 'inactive', 'deleted'].includes(req.query.status)) {
+        filter.status = req.query.status as 'active' | 'inactive' | 'deleted';
+      }
+    }
+    
+    if (req.query.minPrice && typeof req.query.minPrice === 'string') {
+      filter.minPrice = parseFloat(req.query.minPrice);
+    }
+    
+    if (req.query.maxPrice && typeof req.query.maxPrice === 'string') {
+      filter.maxPrice = parseFloat(req.query.maxPrice);
+    }
+    
+    // Set default status filter to 'active' if not specified
+    if (!filter.status) {
+      filter.status = 'active';
+    }
+    
+    const products = await getProducts(filter);
+    
+    res.status(200).json({
+      count: products.length,
+      products
+    });
+  } catch (error) {
+    console.error('Error getting products:', error);
+    res.status(500).json({ message: 'Error retrieving products' });
   }
 };
 
 // Get product by ID
-exports.getProductById = async (req, res) => {
+export const getProduct = async (req: Request, res: Response): Promise<void> => {
   try {
-    const product = await productModel.getProductById(req.params.id);
+    const productId = parseInt(req.params.id, 10);
+    
+    if (isNaN(productId)) {
+      res.status(400).json({ message: 'Invalid product ID' });
+      return;
+    }
+    
+    const product = await getProductById(productId);
     
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      res.status(404).json({ message: 'Product not found' });
+      return;
     }
     
-    res.json(product);
+    res.status(200).json({ product });
   } catch (error) {
-    console.error('Get product by ID error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error getting product:', error);
+    res.status(500).json({ message: 'Error retrieving product' });
   }
 };
 
-// Get products by admin
-exports.getProductsByAdmin = async (req, res) => {
+// Get products by current admin
+export const getMyProducts = async (req: Request & { user?: any }, res: Response): Promise<void> => {
   try {
-    const adminId = req.params.adminId;
-    const products = await productModel.getProductsByAdmin(adminId);
-    res.json(products);
-  } catch (error) {
-    console.error('Get products by admin error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-// Create a new product
-exports.createProduct = async (req, res) => {
-  try {
-    const { name, description, price, image_url } = req.body;
-    
-    // Validate request
-    if (!name || !price) {
-      return res.status(400).json({ message: 'Name and price are required' });
+    // Ensure user is authenticated and is an admin
+    if (!req.user) {
+      res.status(401).json({ message: 'Authentication required' });
+      return;
     }
     
-    // Add the current user (admin) as creator
-    const productData = {
-      name,
-      description,
-      price,
-      image_url,
-      created_by: req.user.id
-    };
+    if (req.user.role !== 'admin') {
+      res.status(403).json({ message: 'Only admins can access their products' });
+      return;
+    }
     
-    const product = await productModel.createProduct(productData);
-    res.status(201).json(product[0]);
+    const adminId = req.user.userId;
+    const products = await getProductsByAdmin(adminId);
+    
+    res.status(200).json({
+      count: products.length,
+      products
+    });
   } catch (error) {
-    console.error('Create product error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error getting admin products:', error);
+    res.status(500).json({ message: 'Error retrieving admin products' });
   }
 };
 
 // Update a product
-exports.updateProduct = async (req, res) => {
+export const updateExistingProduct = async (req: Request & { user?: any }, res: Response): Promise<void> => {
   try {
-    const productId = req.params.id;
-    const { name, description, price, image_url } = req.body;
-    
-    // Validate request
-    if (!name && !description && !price && !image_url) {
-      return res.status(400).json({ message: 'Please provide at least one field to update' });
+    // Ensure user is authenticated and is an admin
+    if (!req.user || req.user.role !== 'admin') {
+      res.status(403).json({ message: 'Only admins can update products' });
+      return;
     }
     
-    // Create update object with only provided fields
-    const updateData = {};
-    if (name) updateData.name = name;
-    if (description) updateData.description = description;
-    if (price) updateData.price = price;
-    if (image_url) updateData.image_url = image_url;
+    const productId = parseInt(req.params.id, 10);
     
-    const product = await productModel.updateProduct(productId, updateData);
-    
-    if (!product || product.length === 0) {
-      return res.status(404).json({ message: 'Product not found or update failed' });
+    if (isNaN(productId)) {
+      res.status(400).json({ message: 'Invalid product ID' });
+      return;
     }
     
-    res.json(product[0]);
+    // Get the existing product to check ownership
+    const existingProduct = await getProductById(productId);
+    
+    if (!existingProduct) {
+      res.status(404).json({ message: 'Product not found' });
+      return;
+    }
+    
+    // Check if the user is the creator of the product
+    if (existingProduct.createdBy !== req.user.userId) {
+      res.status(403).json({ message: 'You can only update products that you created' });
+      return;
+    }
+    
+    const updateData = req.body as Partial<ProductCreationAttributes>;
+    
+    // Validate price if provided
+    if (updateData.price !== undefined && updateData.price <= 0) {
+      res.status(400).json({ message: 'Price must be greater than zero' });
+      return;
+    }
+    
+    // Validate stock quantity if provided
+    if (updateData.stockQuantity !== undefined && updateData.stockQuantity < 0) {
+      res.status(400).json({ message: 'Stock quantity cannot be negative' });
+      return;
+    }
+    
+    // Process specifications if provided
+    if (updateData.specifications !== undefined) {
+      // Ensure it's a valid object
+      if (typeof updateData.specifications !== 'object' || updateData.specifications === null) {
+        updateData.specifications = {};
+      }
+    }
+    
+    // Process imageUrls if provided
+    if (updateData.imageUrls !== undefined) {
+      // Ensure it's a valid array
+      if (!Array.isArray(updateData.imageUrls)) {
+        updateData.imageUrls = [];
+      }
+    }
+    
+    // Update the product
+    const updatedProduct = await updateProduct(productId, updateData);
+    
+    if (!updatedProduct) {
+      res.status(500).json({ message: 'Failed to update product' });
+      return;
+    }
+    
+    res.status(200).json({
+      message: 'Product updated successfully',
+      product: updatedProduct
+    });
   } catch (error) {
-    console.error('Update product error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error updating product:', error);
+    res.status(500).json({ message: 'Error updating product' });
   }
 };
 
 // Delete a product
-exports.deleteProduct = async (req, res) => {
+export const deleteExistingProduct = async (req: Request & { user?: any }, res: Response): Promise<void> => {
   try {
-    const productId = req.params.id;
-    const deleted = await productModel.deleteProduct(productId);
-    
-    if (deleted === 0) {
-      return res.status(404).json({ message: 'Product not found' });
+    // Ensure user is authenticated and is an admin
+    if (!req.user || req.user.role !== 'admin') {
+      res.status(403).json({ message: 'Only admins can delete products' });
+      return;
     }
     
-    res.json({ message: 'Product deleted successfully' });
+    const productId = parseInt(req.params.id, 10);
+    
+    if (isNaN(productId)) {
+      res.status(400).json({ message: 'Invalid product ID' });
+      return;
+    }
+    
+    // Get the existing product to check ownership
+    const existingProduct = await getProductById(productId);
+    
+    if (!existingProduct) {
+      res.status(404).json({ message: 'Product not found' });
+      return;
+    }
+    
+    // Check if the user is the creator of the product
+    if (existingProduct.createdBy !== req.user.userId) {
+      res.status(403).json({ message: 'You can only delete products that you created' });
+      return;
+    }
+    
+    // Delete the product (soft delete)
+    const deleted = await deleteProduct(productId);
+    
+    if (!deleted) {
+      res.status(500).json({ message: 'Failed to delete product' });
+      return;
+    }
+    
+    res.status(200).json({
+      message: 'Product deleted successfully'
+    });
   } catch (error) {
-    console.error('Delete product error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error deleting product:', error);
+    res.status(500).json({ message: 'Error deleting product' });
+  }
+};
+
+// Get available brands for filtering
+export const getBrands = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const brands = await getAvailableBrands();
+    
+    res.status(200).json({
+      brands
+    });
+  } catch (error) {
+    console.error('Error getting brands:', error);
+    res.status(500).json({ message: 'Error retrieving brands' });
   }
 };
