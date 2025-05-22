@@ -13,27 +13,27 @@ const options: swaggerJsdoc.Options = {
       description: 'API for a mobile phone online store',
       contact: {
         name: 'API Support',
-        email: 'support@example.com'
-      }
+        email: 'support@example.com',
+      },
     },
     servers: [
       {
         url: 'http://localhost:3000',
-        description: 'Development server'
-      }
+        description: 'Development server',
+      },
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    }
+          bearerFormat: 'JWT',
+        },
+      },
+    },
   },
   // Path to the API docs
-  apis: ['./src/routes/*.ts']
+  apis: ['./src/routes/*.ts'],
 };
 
 // Initialize swagger-jsdoc
@@ -42,7 +42,7 @@ const specs = swaggerJsdoc(options);
 // Setup swagger in express app
 export const setupSwagger = (app: Express): void => {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-  
+
   // Serve swagger.json file
   app.get('/swagger.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');

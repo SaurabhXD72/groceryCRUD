@@ -14,7 +14,9 @@ const Navbar = () => {
     <ul className="navbar-nav ml-auto">
       {user && user.role === 'admin' && (
         <li className="nav-item">
-          <Link className="nav-link" to="/admin/dashboard">Admin Dashboard</Link>
+          <Link className="nav-link" to="/admin/dashboard">
+            Admin Dashboard
+          </Link>
         </li>
       )}
       <li className="nav-item">
@@ -28,10 +30,14 @@ const Navbar = () => {
   const guestLinks = (
     <ul className="navbar-nav ml-auto">
       <li className="nav-item">
-        <Link className="nav-link" to="/register">Register</Link>
+        <Link className="nav-link" to="/register">
+          Register
+        </Link>
       </li>
       <li className="nav-item">
-        <Link className="nav-link" to="/login">Login</Link>
+        <Link className="nav-link" to="/login">
+          Login
+        </Link>
       </li>
     </ul>
   );
@@ -39,7 +45,9 @@ const Navbar = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
       <div className="container">
-        <Link className="navbar-brand" to="/">Phone Store</Link>
+        <Link className="navbar-brand" to="/">
+          Phone Store
+        </Link>
         <button
           className="navbar-toggler"
           type="button"

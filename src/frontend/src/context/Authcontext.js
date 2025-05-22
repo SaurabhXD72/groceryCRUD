@@ -14,10 +14,10 @@ export const AuthProvider = ({ children }) => {
     const checkLoggedIn = async () => {
       if (localStorage.getItem('token')) {
         const token = localStorage.getItem('token');
-        
+
         // Set default headers for all requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+
         try {
           const res = await axios.get('http://localhost:5000/api/auth/me');
           setUser(res.data);
@@ -29,19 +29,23 @@ export const AuthProvider = ({ children }) => {
       }
       setLoading(false);
     };
-    
+
     checkLoggedIn();
   }, []);
 
   // Register user
   const register = async (formData) => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/register', formData);
+      const res = await axios.post(
+        'http://localhost:5000/api/auth/register',
+        formData,
+      );
       localStorage.setItem('token', res.data.token);
-      
+
       // Set default headers for all requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-      
+      axios.defaults.headers.common['Authorization'] =
+        `Bearer ${res.data.token}`;
+
       setUser(res.data.user);
       setError(null);
       return true;
@@ -54,12 +58,16 @@ export const AuthProvider = ({ children }) => {
   // Login user
   const login = async (formData) => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const res = await axios.post(
+        'http://localhost:5000/api/auth/login',
+        formData,
+      );
       localStorage.setItem('token', res.data.token);
-      
+
       // Set default headers for all requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-      
+      axios.defaults.headers.common['Authorization'] =
+        `Bearer ${res.data.token}`;
+
       setUser(res.data.user);
       setError(null);
       return true;
@@ -84,7 +92,7 @@ export const AuthProvider = ({ children }) => {
         error,
         register,
         login,
-        logout
+        logout,
       }}
     >
       {children}

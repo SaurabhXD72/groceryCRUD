@@ -6,7 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
   const { email, password } = formData;
   const { login, user, error } = useContext(AuthContext);
@@ -19,11 +19,11 @@ const Login = () => {
     }
   }, [user, history]);
 
-  const onChange = e => {
+  const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const onSubmit = async e => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     const success = await login(formData);
     if (success) {

@@ -9,7 +9,7 @@ const Register = () => {
     email: '',
     password: '',
     password2: '',
-    role: 'customer'
+    role: 'customer',
   });
   const { name, email, password, password2, role } = formData;
   const { register, user, error } = useContext(AuthContext);
@@ -23,26 +23,26 @@ const Register = () => {
     }
   }, [user, history]);
 
-  const onChange = e => {
+  const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const onSubmit = async e => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Check if passwords match
     if (password !== password2) {
       setFormError('Passwords do not match');
       return;
     }
-    
+
     const registerData = {
       name,
       email,
       password,
-      role
+      role,
     };
-    
+
     const success = await register(registerData);
     if (success) {
       history.push('/');

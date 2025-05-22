@@ -22,13 +22,13 @@ router.get('/:id', authenticate, async (req, res) => {
     if (req.user.role !== 'admin' && req.user.id !== parseInt(req.params.id)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
-    
+
     const user = await userModel.getUserById(req.params.id);
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     // Don't return password
     const { password, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);

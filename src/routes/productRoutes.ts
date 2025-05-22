@@ -7,7 +7,7 @@ import {
   getMyProducts,
   updateExistingProduct,
   deleteExistingProduct,
-  getBrands
+  getBrands,
 } from '../controllers/productController';
 import { authenticateJWT, authorizeAdmin } from '../utils/auth';
 

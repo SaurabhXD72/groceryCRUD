@@ -18,7 +18,7 @@ export const generateToken = (user: User): string => {
   const payload: TokenPayload = {
     userId: user.id,
     email: user.email,
-    role: user.role
+    role: user.role,
   };
 
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRE });
@@ -27,7 +27,7 @@ export const generateToken = (user: User): string => {
 // Verify password
 export const verifyPassword = async (
   plainPassword: string,
-  hashedPassword: string
+  hashedPassword: string,
 ): Promise<boolean> => {
   return await bcrypt.compare(plainPassword, hashedPassword);
 };
@@ -42,7 +42,7 @@ export const hashPassword = async (password: string): Promise<string> => {
 export const authenticateJWT = (
   req: Request & { user?: TokenPayload },
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   const authHeader = req.headers.authorization;
 
@@ -71,7 +71,7 @@ export const authenticateJWT = (
 export const authorizeAdmin = (
   req: Request & { user?: TokenPayload },
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   if (!req.user) {
     res.status(401).json({ message: 'User not authenticated' });

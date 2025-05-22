@@ -31,18 +31,20 @@ const Home = () => {
   return (
     <div>
       <h1 className="mb-4">
-        {user && user.role === 'admin' ? 'All Products' : 'Welcome to Phone Store'}
+        {user && user.role === 'admin'
+          ? 'All Products'
+          : 'Welcome to Phone Store'}
       </h1>
-      
+
       {user && user.role === 'admin' && (
         <Link to="/admin/dashboard" className="btn btn-primary mb-4">
           Go to Admin Dashboard
         </Link>
       )}
-      
+
       <div className="row">
         {products.length > 0 ? (
-          products.map(product => (
+          products.map((product) => (
             <div className="col-md-4 mb-4" key={product.id}>
               <div className="card h-100">
                 <div className="card-body">

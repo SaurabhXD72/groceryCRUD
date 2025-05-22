@@ -9,7 +9,7 @@ const AdminRoute = ({ component: Component, ...rest }) => {
   return (
     <Route
       {...rest}
-      render={props =>
+      render={(props) =>
         loading ? (
           <div>Loading...</div>
         ) : user && user.role === 'admin' ? (

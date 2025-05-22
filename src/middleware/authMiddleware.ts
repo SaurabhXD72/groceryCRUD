@@ -7,29 +7,31 @@ exports.authenticate = async (req, res, next) => {
   try {
     // Get token from header
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
-      return res.status(401).json({ message: 'No token, authorization denied' });
+      return res
+        .status(401)
+        .json({ message: 'No token, authorization denied' });
     }
-    
+
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Find user from decoded token
     const user = await userModel.getUserById(decoded.id);
-    
+
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
-    
+
     // Add user to request object
     req.user = {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role
+      role: user.role,
     };
-    
+
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
@@ -51,15 +53,17 @@ exports.isProductOwner = async (req, res, next) => {
   try {
     const productId = req.params.id;
     const product = await knex('products').where({ id: productId }).first();
-    
+
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    
+
     if (product.created_by !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to modify this product' });
+      return res
+        .status(403)
+        .json({ message: 'Not authorized to modify this product' });
     }
-    
+
     next();
   } catch (error) {
     console.error('Product ownership check error:', error);
