@@ -43,17 +43,29 @@ app.use((req, res) => {
 });
 
 // Error handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'An unexpected error occurred', error: process.env.NODE_ENV === 'development' ? err.message : undefined });
-});
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ) => {
+    console.error(err.stack);
+    res
+      .status(500)
+      .json({
+        message: 'An unexpected error occurred',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      });
+  },
+);
 
 // Start the server
 const startServer = async () => {
   try {
     // Test database connection
     await testConnection();
-    
+
     // Start listening
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);

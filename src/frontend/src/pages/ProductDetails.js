@@ -40,7 +40,9 @@ const ProductDetails = () => {
     <div className="card">
       <div className="card-body">
         <h2 className="card-title">{product.name}</h2>
-        <h5 className="card-subtitle mb-3 text-muted">Price: ${product.price}</h5>
+        <h5 className="card-subtitle mb-3 text-muted">
+          Price: ${product.price}
+        </h5>
         <p className="card-text">{product.description}</p>
         <p>
           <strong>Added by:</strong> {product.creator_name}

@@ -8,34 +8,34 @@ const CreateProduct = () => {
     name: '',
     description: '',
     price: '',
-    image_url: ''
+    image_url: '',
   });
   const [error, setError] = useState('');
   const history = useHistory();
 
   const { name, description, price, image_url } = formData;
 
-  const onChange = e => {
+  const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const onSubmit = async e => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate price as a number
     if (isNaN(parseFloat(price))) {
       setError('Price must be a valid number');
       return;
     }
-    
+
     // Create product data object
     const productData = {
       name,
       description,
       price: parseFloat(price),
-      image_url
+      image_url,
     };
-    
+
     try {
       await axios.post('http://localhost:5000/api/products', productData);
       history.push('/admin/dashboard');
@@ -49,7 +49,7 @@ const CreateProduct = () => {
       <div className="card-body">
         <h2 className="card-title mb-4">Add New Product</h2>
         {error && <div className="alert alert-danger">{error}</div>}
-        
+
         <form onSubmit={onSubmit}>
           <div className="form-group">
             <label>Product Name</label>
@@ -62,7 +62,7 @@ const CreateProduct = () => {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label>Description</label>
             <textarea
@@ -73,7 +73,7 @@ const CreateProduct = () => {
               rows="4"
             ></textarea>
           </div>
-          
+
           <div className="form-group">
             <label>Price</label>
             <input
@@ -85,7 +85,7 @@ const CreateProduct = () => {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label>Image URL</label>
             <input
@@ -96,7 +96,7 @@ const CreateProduct = () => {
               onChange={onChange}
             />
           </div>
-          
+
           <button type="submit" className="btn btn-primary">
             Create Product
           </button>

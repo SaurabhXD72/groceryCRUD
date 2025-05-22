@@ -14,7 +14,9 @@ const AdminDashboard = () => {
     const fetchAdminProducts = async () => {
       try {
         if (user && user.id) {
-          const res = await axios.get(`http://localhost:5000/api/products/admin/${user.id}`);
+          const res = await axios.get(
+            `http://localhost:5000/api/products/admin/${user.id}`,
+          );
           setProducts(res.data);
         }
         setLoading(false);
@@ -31,7 +33,7 @@ const AdminDashboard = () => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await axios.delete(`http://localhost:5000/api/products/${id}`);
-        setProducts(products.filter(product => product.id !== id));
+        setProducts(products.filter((product) => product.id !== id));
       } catch (err) {
         setError('Error deleting product');
       }
@@ -46,15 +48,13 @@ const AdminDashboard = () => {
     <div>
       <h1 className="mb-4">Admin Dashboard</h1>
       {error && <div className="alert alert-danger">{error}</div>}
-      
+
       <Link to="/admin/products/create" className="btn btn-success mb-4">
         Add New Product
       </Link>
-      
+
       <div className="card">
-        <div className="card-header">
-          Your Products
-        </div>
+        <div className="card-header">Your Products</div>
         <div className="card-body">
           {products.length > 0 ? (
             <div className="table-responsive">
@@ -67,7 +67,7 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map(product => (
+                  {products.map((product) => (
                     <tr key={product.id}>
                       <td>{product.name}</td>
                       <td>${product.price}</td>

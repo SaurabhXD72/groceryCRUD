@@ -20,15 +20,17 @@
     "knex": "^3.1.0",
     "mysql2": "^3.14.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "zod": "^3.25.21"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/body-parser": "^1.19.5",
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
-    "eslint": "^9.24.0",
+    "eslint": "^9.27.0",
     "prettier": "^3.5.3",
-    "ts-node-dev": "^2.0.0"
+    "ts-node-dev": "^2.0.0",
+    "typescript-eslint": "^8.32.1"
   }
 }

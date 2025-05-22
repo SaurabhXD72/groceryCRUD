@@ -1,6 +1,11 @@
 // Update frontend/src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Route,
+  Switch,
+  Redirect,
+} from 'react-router-dom';
 import { AuthProvider } from './context/Authcontext.js';
 import Navbar from './components/layout/Navbar.js';
 import Home from './pages/Home';
@@ -24,9 +29,21 @@ function App() {
             <Route exact path="/login" component={Login} />
             <Route exact path="/register" component={Register} />
             <Route exact path="/products/:id" component={ProductDetails} />
-            <AdminRoute exact path="/admin/dashboard" component={AdminDashboard} />
-            <AdminRoute exact path="/admin/products/create" component={CreateProduct} />
-            <AdminRoute exact path="/admin/products/edit/:id" component={EditProduct} />
+            <AdminRoute
+              exact
+              path="/admin/dashboard"
+              component={AdminDashboard}
+            />
+            <AdminRoute
+              exact
+              path="/admin/products/create"
+              component={CreateProduct}
+            />
+            <AdminRoute
+              exact
+              path="/admin/products/edit/:id"
+              component={EditProduct}
+            />
             <Redirect to="/" />
           </Switch>
         </div>
