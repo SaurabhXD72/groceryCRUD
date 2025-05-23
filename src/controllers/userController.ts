@@ -1,29 +1,54 @@
+// src/controllers/userController.ts
 import { Request, Response } from 'express';
 import db from '../db/knex';
+import { User, UserDTO } from '../models/userModel';
 
-// Get available grocery items (inventory > 0)
-export const getAvailableGroceries = async (req: Request, res: Response) => {
-  try {
-    const groceries = await db('grocery_items')
-      .where('inventory', '>', 0)
-      .select('id', 'name', 'price', 'inventory');
-
-    res.json(groceries);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch groceries' });
+// Local toUserDTO helper function
+const toUserDTO = (user: User): UserDTO => {
+  const { password, ...rest } = user; // eslint-disable-line @typescript-eslint/no-unused-vars
+  const userDto: UserDTO = {
+    id: rest.id,
+    email: rest.email,
+    role: rest.role,
+    createdAt: rest.createdAt,
+    updatedAt: rest.updatedAt,
+  };
+  if (rest.name !== undefined) {
+    userDto.name = rest.name;
   }
+  return userDto;
 };
 
-// Get order history for logged-in user
-export const getOrderHistory = async (req: Request, res: Response) => {
-  try {
-    const orders = await db('orders')
-      .where('userId', req.user?.id)
-      .join('order_items', 'orders.id', 'order_items.order_id')
-      .select('orders.*', 'order_items.item_id', 'order_items.quantity');
+// Internal Knex-based function to get user by ID
+const getUserByIdForProfile = async (id: number): Promise<User | null> => {
+  const user = await db('users').where({ id }).first();
+  return user || null;
+};
 
-    res.json(orders);
+export const getCurrentUserProfile = async (
+  req: Request & { user?: any }, // req.user is expected from auth middleware
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user || !req.user.userId) {
+      // This should ideally be caught by auth middleware,
+      // but as a safeguard in controller:
+      res.status(401).json({ message: 'Not authenticated or user ID missing from token' });
+      return;
+    }
+
+    const userId = req.user.userId;
+    const user = await getUserByIdForProfile(userId);
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const userDto = toUserDTO(user);
+    res.status(200).json(userDto);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch orders' });
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: 'Error retrieving user profile' });
   }
 };

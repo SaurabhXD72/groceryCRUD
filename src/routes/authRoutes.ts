@@ -2,6 +2,8 @@
 import express from 'express';
 import { register, login, getCurrentUser } from '../controllers/authController';
 import { authenticateJWT } from '../utils/auth';
+import { validateRequestBody } from '../middleware/validationMiddleware';
+import { registerSchema, loginSchema } from '../schemas/authSchemas'; // Assuming loginSchema is also used
 
 const router = express.Router();
 
@@ -31,6 +33,9 @@ const router = express.Router();
  *                 type: string
  *                 enum: [admin, customer]
  *                 default: customer
+ *               name:
+ *                 type: string
+ *                 description: User's name (optional)
  *     responses:
  *       201:
  *         description: User created successfully
@@ -39,7 +44,7 @@ const router = express.Router();
  *       409:
  *         description: Email already exists
  */
-router.post('/register', register);
+router.post('/register', validateRequestBody(registerSchema), register);
 
 /**
  * @swagger
@@ -68,7 +73,7 @@ router.post('/register', register);
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', login);
+router.post('/login', validateRequestBody(loginSchema), login); // Added validation for login route as well for consistency
 
 /**
  * @swagger

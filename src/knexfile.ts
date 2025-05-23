@@ -16,6 +16,19 @@ const config: { [key: string]: Knex.Config } = {
       directory: './db/seeds',
     },
   },
+  test: {
+    client: 'sqlite3',
+    connection: {
+      filename: './test.db3', // Or ':memory:'
+    },
+    migrations: {
+      directory: './src/db/migrations',
+    },
+    seeds: {
+      directory: './src/db/seeds',
+    },
+    useNullAsDefault: true, // Recommended for SQLite
+  },
 };
 
 export default config;

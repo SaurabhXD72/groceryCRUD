@@ -1,41 +1,32 @@
-// Create file: backend/routes/userRoutes.js
-const express = require('express');
-const router = express.Router();
-const userModel = require('../models/userModel');
-const { authenticate, isAdmin } = require('../middleware/authMiddleware');
+// src/routes/userRoutes.ts
+import { Router } from 'express';
+import { getCurrentUserProfile } from '../controllers/userController';
+import { authenticateJWT } from '../utils/auth'; // Assuming this is the correct auth middleware
 
-// Get all users (admin only)
-router.get('/', authenticate, isAdmin, async (req, res) => {
-  try {
-    const users = await userModel.getAllUsers();
-    res.json(users);
-  } catch (error) {
-    console.error('Get all users error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+const router = Router();
 
-// Get user by ID (admin or same user)
-router.get('/:id', authenticate, async (req, res) => {
-  try {
-    // Check if user is admin or the same user
-    if (req.user.role !== 'admin' && req.user.id !== parseInt(req.params.id)) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
+/**
+ * @swagger
+ * /api/users/me:
+ *   get:
+ *     summary: Get current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: [] # Assuming JWT bearer token authentication
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved user profile.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserDTO' # Reference your UserDTO schema
+ *       401:
+ *         description: Not authenticated.
+ *       404:
+ *         description: User not found.
+ *       500:
+ *         description: Internal server error.
+ */
+router.get('/me', authenticateJWT, getCurrentUserProfile);
 
-    const user = await userModel.getUserById(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Don't return password
-    const { password, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
-  } catch (error) {
-    console.error('Get user by ID error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-module.exports = router;
+export default router;

@@ -7,9 +7,18 @@ import {
   getMyProducts,
   updateExistingProduct,
   deleteExistingProduct,
+  createProductHandler, // Changed from createNewProduct
+  getAllProducts,
+  getProduct,
+  getMyProducts,
+  updateExistingProduct,
+  deleteExistingProduct,
   getBrands,
 } from '../controllers/productController';
-import { authenticateJWT, authorizeAdmin } from '../utils/auth';
+import { authenticateJWT } from '../utils/auth'; // authorizeAdmin removed, will use adminOnlyMiddleware
+import { adminOnlyMiddleware } from '../middleware/adminOnlyMiddleware';
+import { validateRequestBody } from '../middleware/validationMiddleware';
+import { createProductSchema } from '../schemas/productSchemas';
 
 const router = express.Router();
 
@@ -145,7 +154,13 @@ router.get('/admin/me', authenticateJWT, authorizeAdmin, getMyProducts);
  *       403:
  *         description: Not authorized
  */
-router.post('/', authenticateJWT, authorizeAdmin, createNewProduct);
+router.post(
+  '/', 
+  authenticateJWT, 
+  adminOnlyMiddleware, 
+  validateRequestBody(createProductSchema), 
+  createProductHandler 
+);
 
 /**
  * @swagger

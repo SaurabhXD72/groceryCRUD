@@ -10,6 +10,7 @@ import { testConnection } from './config/db';
 // Routes
 import authRoutes from './routes/authRoutes';
 import productRoutes from './routes/productRoutes';
+import userRoutes from './routes/userRoutes'; // Import userRoutes
 
 // Load environment variables
 dotenv.config();
@@ -31,6 +32,7 @@ setupSwagger(app);
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/users', userRoutes); // Mount userRoutes
 
 // Health check endpoint
 app.get('/health', (req, res) => {
